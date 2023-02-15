@@ -21,10 +21,10 @@
 		
 
 		
-		<mapping resource="modelo/AccMovement.hbm.xml" />
-		<mapping resource="modelo/Dept.hbm.xml" />
-		<mapping resource="modelo/Account.hbm.xml" />
-		<mapping resource="modelo/Emp.hbm.xml" />
+		<mapping resource="modelo/AccMovement.hbm.xml"/>
+		<mapping resource="modelo/Dept.hbm.xml"/>
+		<mapping resource="modelo/Account.hbm.xml"/>
+		<mapping resource="modelo/Emp.hbm.xml"/>
 
 		
 	</session-factory>

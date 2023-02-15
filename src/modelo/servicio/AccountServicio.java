@@ -25,7 +25,7 @@ public class AccountServicio implements IAccountServicio{
 			tx= session.beginTransaction();
 			cuenta=session.get(Account.class,accId);
 			if(cuenta==null){
-				System.out.println("No existe ninguna cuenta con el Id: "+accId);
+				throw new InstanceNotFoundException(Account.class.getName());
 			}
 			tx.commit();
 
@@ -42,10 +42,55 @@ public class AccountServicio implements IAccountServicio{
 	@Override
 	public AccMovement transferir(int accOrigen, int accDestino, double cantidad)
 			throws SaldoInsuficienteException, InstanceNotFoundException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
+		SessionFactory factory=SessionFactoryUtil.getSessionFactory();
+		Transaction tx=null;
+		Account cuentaOrigen, cuentaDestino;
+		AccMovement accMovement=null;
+		BigDecimal cantidadBG=new BigDecimal(cantidad);
+		try (Session session= factory.openSession()){
+			tx= session.beginTransaction();
+			cuentaOrigen=RescatarCuenta(session, accOrigen);
+			cuentaDestino=RescatarCuenta(session,accDestino);
+			if(cuentaOrigen==null || cuentaDestino==null){
+				//System.out.println("No existe alguna de las dos cuentas");
+				throw new InstanceNotFoundException("No existe alguna de las cuentas");
+
+			}else{
+				if(cantidad>cuentaOrigen.getAmount().doubleValue()){
+					throw new SaldoInsuficienteException("Saldo Insuficiente",cuentaOrigen.getAmount(),cantidadBG);
+
+				}else{
+					cuentaOrigen.setAmount(BigDecimal.valueOf((cuentaOrigen.getAmount().doubleValue())-cantidad));
+					cuentaDestino.setAmount(BigDecimal.valueOf((cuentaDestino.getAmount().doubleValue())+cantidad));
+					session.saveOrUpdate(cuentaOrigen);
+					session.saveOrUpdate(cuentaDestino);
+					LocalDateTime dateTime=LocalDateTime.now();
+					accMovement=new AccMovement(cuentaOrigen,cuentaDestino,cantidadBG,dateTime);
+					session.save(accMovement);
+					tx.commit();
+				}
+
+
+
+
+			}
+
+
+
+		}catch ( Exception ex) {
+			System.err.println("Ha habido una exception " + ex.getMessage());
+			if (tx != null) {
+				tx.rollback();
+			}
+			throw ex;
+		}
+		return accMovement;
+	}
+
+	private Account RescatarCuenta(Session session, int accOrigen) {
+		Account cuenta=(Account) session.createQuery("Select c from Account c where c.accountno=:idCuentaOrigen").setParameter("idCuentaOrigen",accOrigen).uniqueResult();
+		return cuenta;
 	}
 
 
-	
 }
